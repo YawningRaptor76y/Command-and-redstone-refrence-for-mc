@@ -183,6 +183,10 @@ function buildFilters() {
 function buildSidebar() {
   const section = SECTIONS.getActive();
   const aside   = document.getElementById('aside');
+  if (typeof section.renderSidebar === 'function') {
+    section.renderSidebar(aside);
+    return;
+  }
 
   aside.querySelectorAll('.snav-group, .ilink').forEach(el => el.remove());
 
@@ -221,6 +225,10 @@ function renderMain() {
   const section = SECTIONS.getActive();
   const main    = document.getElementById('main');
   const noRes   = document.getElementById('no-results');
+  if (typeof section.renderTool === 'function') {
+    section.renderTool(main);
+    return;
+  }
   main.querySelectorAll('.group').forEach(el => el.remove());
 
   // commandPrefix: same null-check as buildSidebar
