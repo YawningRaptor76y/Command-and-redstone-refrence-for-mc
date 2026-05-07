@@ -225,19 +225,6 @@ function renderMain() {
   const section = SECTIONS.getActive();
   const main    = document.getElementById('main');
   const noRes   = document.getElementById('no-results');
-
-  // Always purge any existing tool-panel before deciding what to render.
-  // If we skip this when switching away from a renderTool section, the panel
-  // stays in #main permanently because the normal .group cleanup below won't
-  // touch it.
-  const existingPanel = main.querySelector('.tool-panel');
-  if (existingPanel) existingPanel.remove();
-
-  // Reset no-results visibility — tools.js hides it unconditionally.
-  // If we don't reset here, switching to a command section with no results
-  // would leave #no-results hidden permanently.
-  if (noRes) noRes.style.display = 'none';
-
   if (typeof section.renderTool === 'function') {
     section.renderTool(main);
     return;
