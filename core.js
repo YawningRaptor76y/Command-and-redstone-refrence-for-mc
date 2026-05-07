@@ -70,6 +70,43 @@ function tagHTML(cmd) {
   return h;
 }
 
+// ─── TRUTH TABLE RENDERER ────────────────────────────────────────────────────
+// truthTable schema per entry:
+//   truthTable: {
+//     label:   string,           // optional override for section label
+//     columns: string[],         // column headers
+//     rows:    (string|number)[][] // each row matches columns length
+//   }
+//
+// Cell values that equal 0 get class .tt-0 (dim red)
+//                          1 get class .tt-1 (accent blue/green/etc)
+//                          'X' get class .tt-x (don't-care, purple)
+//                          anything else gets .tt-val (text-mid)
+
+function renderTruthTable(tt, term) {
+  const label = tt.label || 'Truth Table';
+  let html = `<div class="slabel">${label}</div>`;
+  html += `<div class="tt-wrap"><table class="tt-table"><thead><tr>`;
+  tt.columns.forEach(col => {
+    html += `<th>${hl(col, term)}</th>`;
+  });
+  html += `</tr></thead><tbody>`;
+  tt.rows.forEach(row => {
+    html += `<tr>`;
+    row.forEach(cell => {
+      const s = String(cell);
+      let cls = 'tt-val';
+      if (s === '0')  cls = 'tt-0';
+      else if (s === '1') cls = 'tt-1';
+      else if (s === 'X' || s === 'x') cls = 'tt-x';
+      html += `<td class="${cls}">${hl(s, term)}</td>`;
+    });
+    html += `</tr>`;
+  });
+  html += `</tbody></table></div>`;
+  return html;
+}
+
 function groupCommands(cmds, filter, section) {
   const out = {};
   for (const g of section.groupOrder) {
@@ -91,7 +128,12 @@ function getFilteredCommands(section, term, filter) {
       cmd.name, cmd.alias, cmd.summary,
       cmd.notes,
       ...(cmd.syntaxes || []),
-      ...(cmd.params   || []).flat()
+      ...(cmd.params   || []).flat(),
+      // include truth table column headers and cell values in search
+      ...(cmd.truthTable ? [
+        ...(cmd.truthTable.columns || []),
+        ...(cmd.truthTable.rows    || []).flat().map(String)
+      ] : [])
     ].join(' ').toLowerCase();
     return searchable.includes(term);
   });
@@ -144,6 +186,10 @@ function buildSidebar() {
 
   aside.querySelectorAll('.snav-group, .ilink').forEach(el => el.remove());
 
+  // commandPrefix: use exactly what the section defines — '' is valid (redstone/tools)
+  // DO NOT fall back to '/' — that breaks non-command sections
+  const prefix = (section.commandPrefix != null) ? section.commandPrefix : '/';
+
   const grouped = groupCommands(section.commands, 'all', section);
   for (const [gKey, cmds] of Object.entries(grouped)) {
     const lbl = document.createElement('div');
@@ -154,7 +200,7 @@ function buildSidebar() {
     cmds.forEach(cmd => {
       const a = document.createElement('div');
       a.className = 'ilink';
-      a.textContent = (section.commandPrefix || '/') + cmd.name;
+      a.textContent = prefix + cmd.name;
       a.dataset.id = cmd.id;
       a.onclick = () => {
         aside.querySelectorAll('.ilink').forEach(l => l.classList.remove('active'));
@@ -176,6 +222,9 @@ function renderMain() {
   const main    = document.getElementById('main');
   const noRes   = document.getElementById('no-results');
   main.querySelectorAll('.group').forEach(el => el.remove());
+
+  // commandPrefix: same null-check as buildSidebar
+  const prefix = (section.commandPrefix != null) ? section.commandPrefix : '/';
 
   const term     = searchTerm.toLowerCase().trim();
   const filtered = getFilteredCommands(section, term, activeFilter);
@@ -206,7 +255,7 @@ function renderMain() {
       const hdr = document.createElement('div');
       hdr.className = 'cmd-hdr';
       hdr.innerHTML = `
-        <span class="cname">${hl((section.commandPrefix || '/') + cmd.name, term)}</span>
+        <span class="cname">${hl(prefix + cmd.name, term)}</span>
         <span class="csum">${hl(cmd.summary, term)}</span>
         <span class="tags-inline">${tagHTML(cmd)}</span>
         <span class="xi">▶</span>`;
@@ -216,9 +265,11 @@ function renderMain() {
       const body = document.createElement('div');
       body.className = 'cbody';
 
+      // ── tags
       const tagsRow = tagHTML(cmd);
       if (tagsRow) body.innerHTML += `<div style="padding-top:10px">${tagsRow}</div>`;
 
+      // ── syntax
       if (cmd.syntaxes && cmd.syntaxes.length > 0) {
         body.innerHTML += `<div class="slabel">Syntax</div>`;
         cmd.syntaxes.forEach(s => {
@@ -226,6 +277,7 @@ function renderMain() {
         });
       }
 
+      // ── params
       if (cmd.params && cmd.params.length > 0) {
         body.innerHTML += `<div class="slabel">Parameters</div>`;
         let pt = `<table class="ptable"><thead><tr><th>Param</th><th>Type</th><th>Description</th></tr></thead><tbody>`;
@@ -236,6 +288,12 @@ function renderMain() {
         body.innerHTML += pt;
       }
 
+      // ── truth table (after params, before gamerules/notes)
+      if (cmd.truthTable) {
+        body.innerHTML += renderTruthTable(cmd.truthTable, term);
+      }
+
+      // ── gamerules
       if (cmd.gamerules) {
         body.innerHTML += `<div class="slabel">Bedrock Game Rules</div>`;
         let gt2 = `<table class="gr-table"><thead><tr><th>Rule</th><th>Type</th><th>Default</th><th>Effect</th></tr></thead><tbody>`;
@@ -246,6 +304,7 @@ function renderMain() {
         body.innerHTML += gt2;
       }
 
+      // ── notes
       if (cmd.notes && cmd.notes.trim()) {
         const notesHL = hl(cmd.notes.replace(/`([^`]+)`/g, '<code>$1</code>'), term);
         body.innerHTML += `<div class="nlabel">Notes</div><div class="notes">${notesHL}</div>`;
