@@ -139,3 +139,65 @@ mark{background:rgba(0,170,255,.2);color:var(--blue);border-radius:2px}
 .tt-val{color:var(--text-mid)}
 /* highlight entire row on hover for readability on wide tables */
 .tt-table tbody tr:hover td{background:rgba(255,255,255,.025)}
+
+
+  .tool-output-block.empty { color: var(--text-dim); font-style: italic; }
+
+  /* COMMAND BUILDER LIST */
+  .cmd-picker-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 12px;
+  }
+
+  .cmd-picker-item {
+    font-family: var(--mono);
+    font-size: .78rem;
+    color: var(--text-dim);
+    padding: 5px 12px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all .1s;
+  }
+
+  .cmd-picker-item:hover { color: var(--blue); background: var(--blue-glow); border-color: var(--blue-dim); }
+  .cmd-picker-item.active { color: var(--blue); border-color: var(--blue); background: var(--blue-glow); }
+
+  .cmd-search {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: .78rem;
+    padding: 6px 12px;
+    outline: none;
+    width: 100%;
+    margin-bottom: 8px;
+    transition: border-color .12s, box-shadow .12s;
+  }
+
+  .cmd-search:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 2px var(--blue-glow);
+  }
+
+  .tool-note {
+    font-family: var(--mono);
+    font-size: .68rem;
+    color: var(--text-dim);
+    padding: 6px 10px;
+    border-left: 2px solid var(--border2);
+    background: var(--bg3);
+    line-height: 1.5;
+  }
+
+  .platform-only-note {
+    font-family: var(--mono);
+    font-size: .65rem;
+    color: var(--yellow);
+    padding: 4px 8px;
+    border: 1px solid #4a3900;
+    background: rgba(255,208,0,.04);
+    display: inline-block;
+  }
