@@ -201,3 +201,315 @@ mark{background:rgba(0,170,255,.2);color:var(--blue);border-radius:2px}
     background: rgba(255,208,0,.04);
     display: inline-block;
   }
+
+/* ─── DROPDOWN STYLING ────────────────────────────────────────────────────── */
+/* Force dark bg on the select element itself. Option elements inherit from    */
+/* the OS picker on most browsers, but at minimum the trigger is consistent.  */
+#section-select {
+  margin-left: auto;
+  background: var(--bg3);
+  color: var(--blue);
+  border: 1px solid var(--border2);
+  font-family: var(--mono);
+  font-size: .74rem;
+  padding: 4px 8px;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  /* Inline caret glyph so we own the full visual */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23777'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 24px;
+  transition: border-color .12s, box-shadow .12s;
+}
+#section-select:focus { border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue-glow); }
+#section-select option { background: var(--bg2); color: var(--text); }
+
+/* ─── TOOLS SECTION ───────────────────────────────────────────────────────── */
+/* Panel wrapper — fills the main content area the same way .group does        */
+.tool-panel {
+  border: 1px solid var(--border);
+  background: var(--bg2);
+}
+
+/* Tool header bar — mirrors .gtitle in weight and mono feel */
+.tool-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+}
+
+.tool-title {
+  font-family: var(--mono);
+  font-size: .78rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--blue);
+}
+
+/* Platform toggle sits in the header; reuses .pill from core */
+.tool-platform-toggle {
+  display: flex;
+  gap: 4px;
+}
+
+/* Tool body — scrollable column of field sections */
+.tool-body {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ── Collapsible field sections ─────────────────────────────────────────── */
+.field-section {
+  border: 1px solid var(--border);
+}
+
+.field-section-title {
+  font-family: var(--mono);
+  font-size: .62rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--blue);
+  padding: 7px 12px;
+  background: var(--bg3);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none;
+  transition: background .12s;
+}
+.field-section-title:hover { background: var(--blue-glow); }
+
+.field-chevron {
+  font-size: .6rem;
+  color: var(--text-dim);
+  transition: transform .18s;
+}
+.field-section.collapsed .field-chevron { transform: rotate(-90deg); }
+
+.field-section-body {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  background: var(--bg4);
+}
+.field-section.collapsed .field-section-body { display: none; }
+
+/* ── Field rows ─────────────────────────────────────────────────────────── */
+.field-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.field-label {
+  font-family: var(--mono);
+  font-size: .65rem;
+  color: var(--text-dim);
+  min-width: 160px;
+  flex-shrink: 0;
+  letter-spacing: .04em;
+}
+.field-label.required { color: var(--orange); }
+
+/* Checkbox row — label follows checkbox inline */
+.tool-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Inputs ─────────────────────────────────────────────────────────────── */
+.tool-input {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: .78rem;
+  padding: 5px 10px;
+  outline: none;
+  flex: 1;
+  min-width: 120px;
+  transition: border-color .12s, box-shadow .12s;
+  /* No border-radius — keeps the blocky look */
+}
+.tool-input:focus { border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue-glow); }
+.tool-input::placeholder { color: var(--text-dim); }
+
+/* Narrow variants for numeric / short inputs */
+.tool-input.short { flex: 0 0 80px; min-width: unset; }
+.tool-input.medium { flex: 0 0 160px; min-width: unset; }
+
+/* Select inherits .tool-input sizing; override appearance for consistency */
+select.tool-input {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23777'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 22px;
+  cursor: pointer;
+}
+select.tool-input option { background: var(--bg2); color: var(--text); }
+
+/* Textarea shares tool-input but grows vertically */
+textarea.tool-input {
+  resize: vertical;
+  min-height: 52px;
+  line-height: 1.5;
+}
+
+/* Checkbox — square, accent-colored when checked */
+.tool-checkbox {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--blue);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* ── Repeatable rows (enchantments, attributes, etc.) ───────────────────── */
+.repeat-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.repeat-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  background: var(--bg3);
+}
+
+.repeat-add {
+  font-family: var(--mono);
+  font-size: .65rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--blue);
+  background: transparent;
+  border: 1px solid var(--blue-dim);
+  padding: 4px 12px;
+  cursor: pointer;
+  transition: background .1s, border-color .1s;
+  align-self: flex-start;
+}
+.repeat-add:hover { background: var(--blue-glow); border-color: var(--blue); }
+
+.repeat-remove {
+  font-family: var(--mono);
+  font-size: .68rem;
+  color: var(--red);
+  background: transparent;
+  border: 1px solid #4a0010;
+  padding: 3px 8px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background .1s;
+}
+.repeat-remove:hover { background: rgba(255,50,80,.08); }
+
+/* ── Output section ─────────────────────────────────────────────────────── */
+.tool-output-section {
+  border: 1px solid var(--border);
+  margin-top: 4px;
+}
+
+.tool-output-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 12px;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: .62rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--blue);
+}
+
+.tool-output-actions { display: flex; gap: 6px; }
+
+.tool-btn {
+  font-family: var(--mono);
+  font-size: .62rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  background: transparent;
+  border: 1px solid var(--border2);
+  padding: 3px 10px;
+  cursor: pointer;
+  transition: color .1s, border-color .1s, background .1s;
+}
+.tool-btn:hover { color: var(--blue); border-color: var(--blue-dim); background: var(--blue-glow); }
+.tool-btn.copy-success { color: var(--green); border-color: var(--green); }
+
+.tool-output-block {
+  font-family: var(--mono);
+  font-size: .8rem;
+  color: var(--text);
+  padding: 12px 14px;
+  background: #000;
+  border-left: 2px solid var(--blue-dim);
+  white-space: pre-wrap;
+  word-break: break-all;
+  line-height: 1.65;
+  min-height: 44px;
+}
+.tool-output-block.empty {
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+/* ── Passenger builder (recursive) ─────────────────────────────────────── */
+.passenger-block {
+  border: 1px solid var(--border);
+  padding: 8px 10px;
+  margin: 4px 0;
+  background: var(--bg3);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.passenger-header {
+  font-family: var(--mono);
+  font-size: .63rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text-mid);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.passenger-remove {
+  font-family: var(--mono);
+  font-size: .62rem;
+  color: var(--red);
+  background: transparent;
+  border: 1px solid #4a0010;
+  padding: 2px 8px;
+  cursor: pointer;
+  transition: background .1s;
+}
+.passenger-remove:hover { background: rgba(255,50,80,.08); }
