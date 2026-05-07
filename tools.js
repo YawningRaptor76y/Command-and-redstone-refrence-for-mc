@@ -674,9 +674,10 @@ const _TOOLS_CMDS = [
 ];
 
 // ─── PRIVATE TOOLS SCOPE ─────────────────────────────────────────────────────
-// All state, rendering, and logic is private. No globals written here except
-// the _TOOLS_* data arrays above and SECTIONS.register() call at the bottom.
-(function () {
+// All render logic and state lives in this IIFE. It returns { renderTool,
+// renderSidebar } so that SECTIONS.register() can reference them from global
+// scope outside the IIFE — per framework Section 10 Rule 1.
+const _TOOLS_PRIV = (function () {
 
   // ── Closure state ──────────────────────────────────────────────────────────
   let _activeTool = 'give';   // 'give' | 'summon' | 'cmd'
@@ -1082,8 +1083,6 @@ const _TOOLS_CMDS = [
 
       addBtn.onclick = addFwRow;
       repeatBlock.appendChild(addBtn);
-      // NOTE: flightIn row already appended above at bd.appendChild(fieldRow('Flight Duration',...))
-      // Do NOT re-append here — the original code had a duplicate that broke DOM index queries.
       bd.appendChild(repeatBlock);
       return { flightIn };
     }, true);
@@ -1278,10 +1277,6 @@ const _TOOLS_CMDS = [
       }
     }
 
-    // Single output block — makeOutputBlock was previously called twice here.
-    // The second call created an orphaned block that was never appended, and
-    // the intermediate wiring used outSection.children[1].__refresh which is
-    // always undefined. Collapsed to one call + one doRefresh function.
     const { section: outSection, resetBtn } = makeOutputBlock(assembleGive);
     const outBlock = outSection.querySelector('.tool-output-block');
 
@@ -1298,7 +1293,6 @@ const _TOOLS_CMDS = [
       panel.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
       panel.querySelectorAll('textarea').forEach(t => t.value = '');
       panel.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
-      // Clear repeat-row arrays and DOM for enchantments, attributes, fireworks
       enchRows.length = 0;
       attrRows.length = 0;
       fwRows.length = 0;
@@ -1308,7 +1302,6 @@ const _TOOLS_CMDS = [
       doRefresh();
     };
 
-    // Delegate all input/change events from the panel up to doRefresh.
     panel.addEventListener('input',  doRefresh);
     panel.addEventListener('change', doRefresh);
 
@@ -1901,4 +1894,10 @@ const _TOOLS_CMDS = [
             fieldsContainer.appendChild(el('span','field-label','z')); fieldsContainer.appendChild(zIn);
             obj.xIn=xIn; obj.yIn=yIn; obj.zIn=zIn;
           } else if (['facing'].includes(action)) {
-            co
+            const xIn = inp('text','tool-input short','~'); const yIn = inp('text','tool-input short','~'); const zIn = inp('text','tool-input short','~');
+            fieldsContainer.appendChild(el('span','field-label','x')); fieldsContainer.appendChild(xIn);
+            fieldsContainer.appendChild(el('span','field-label','y')); fieldsContainer.appendChild(yIn);
+            fieldsContainer.appendChild(el('span','field-label','z')); fieldsContainer.appendChild(zIn);
+            obj.xIn=xIn; obj.yIn=yIn; obj.zIn=zIn;
+          } else if (['facing_entity'].includes(action)) {
+            con
