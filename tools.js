@@ -1222,7 +1222,16 @@ slot:"${safeSlot}"
           comps.push(`fireworks={flight_duration:${fwFlight},explosions:[${expStr}]}`);
         }
 
-        if (rawNbt) comps.push(rawNbt.replace(/^\{|\}$/g,''));
+        if (rawNbt) {
+  const cleaned = rawNbt
+    .replace(/^\[/, '')
+    .replace(/\]$/, '')
+    .replace(/^\{/, '')
+    .replace(/\}$/, '')
+    .trim();
+
+  if (cleaned) comps.push(cleaned);
+}
 
         const compStr = comps.length ? `[${comps.join(',')}]` : '';
         const countStr = count !== 1 ? ` ${count}` : '';
