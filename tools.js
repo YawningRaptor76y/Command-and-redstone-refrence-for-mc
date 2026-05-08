@@ -1143,9 +1143,19 @@ const _TOOLS_CMDS = [
         const comps = [];
 
         if (customName) {
-          const escaped = customName.replace(/\\/g,'\\\\').replace(/"/g,'\\"').replace(/'/g,"\\'");
-          comps.push(`custom_name='{"text":"${escaped}"}'`);
-        }
+  const trimmed = customName.trim();
+
+  if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+    comps.push(`custom_name='${trimmed}'`);
+  } else {
+    const escaped = trimmed
+      .replace(/\\/g,'\\\\')
+      .replace(/"/g,'\\"')
+      .replace(/'/g,"\\'");
+
+    comps.push(`custom_name='{"text":"${escaped}"}'`);
+  }
+}
         if (loreLines.length) {
           const loreStr = loreLines.map(l => {
             const le = l.replace(/\\/g,'\\\\').replace(/"/g,'\\"').replace(/'/g,"\\'");
