@@ -699,7 +699,11 @@ const _TOOLS_CMDS = [
     e.type = type;
     if (cls)         e.className = cls;
     if (placeholder) e.placeholder = placeholder;
-    if (value != null) e.value = value;
+
+    if (value != null) {
+  e.value = value;
+  e.dataset.defaultValue = value;
+    }
     return e;
   }
 
