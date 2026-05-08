@@ -3318,7 +3318,13 @@ const _TOOLS_CMDS = [
     }
 
     resetBtn.onclick = () => {
-      panel.querySelectorAll('input[type="text"],input[type="number"]').forEach(i => i.value = i.placeholder||'');
+      panel.querySelectorAll('input[type="text"]').forEach(i => {
+      i.value = '';
+    });
+
+    panel.querySelectorAll('input[type="number"]').forEach(i => {
+      i.value = '0';
+    });
       panel.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
       panel.querySelectorAll('textarea').forEach(t => t.value = '');
       panel.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
