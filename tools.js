@@ -1138,10 +1138,27 @@ const _TOOLS_CMDS = [
         // ── Java: /give <target> <item>[components] <count>
         const comps = [];
 
-        if (customName) comps.push(`custom_name='{"text":"${customName.replace(/"/g,'\\"')}"}'`);
+        if (customName) {
+  const trimmed = customName.trim();
+
+  if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+    comps.push(`custom_name='${trimmed}'`);
+  } else {
+    comps.push(`custom_name='{"text":"${trimmed.replace(/"/g,'\\"')}"}'`);
+  }
+        }
         if (loreLines.length) {
-          const loreStr = loreLines.map(l => `'{"text":"${l.replace(/"/g,'\\"')}"}'`).join(',');
-          comps.push(`lore=[${loreStr}]`);
+  const loreStr = loreLines.map(l => {
+    const t = l.trim();
+
+    if (t.startsWith('{') || t.startsWith('[')) {
+      return `'${t}'`;
+    }
+
+    return `'{"text":"${t.replace(/"/g,'\\"')}"}'`;
+  }).join(',');
+
+  comps.push(`lore=[${loreStr}]`);
         }
         if (cmdModel) comps.push(`custom_model_data=${cmdModel}`);
         if (rarity)   comps.push(`rarity="${rarity}"`);
@@ -1164,12 +1181,29 @@ const _TOOLS_CMDS = [
         }
 
         // Attribute modifiers
-        if (attrRows.length) {
-          const aStr = attrRows.filter(r => r.attrSel.value).map(r =>
-            `{type:"${r.attrSel.value}",amount:${parseFloat(r.amountIn.value)||0},operation:"${r.opSel.value}",slot:"${r.slotSel.value}"}`
-          ).join(',');
-          if (aStr) comps.push(`attribute_modifiers=[${aStr}]`);
-        }
+        // Attribute modifiers
+if (attrRows.length) {
+  const validAttrs = attrRows.filter(r => r.attrSel.value);
+
+  const aStr = validAttrs.map((r, i) => {
+    const parts = [];
+
+    parts.push(`type:"${r.attrSel.value}"`);
+    parts.push(`amount:${parseFloat(r.amountIn.value) || 0}`);
+    parts.push(`operation:"${r.opSel.value}"`);
+
+    if (r.slotSel.value && r.slotSel.value !== 'any') {
+      parts.push(`slot:"${r.slotSel.value}"`);
+    }
+
+    // Required for modern Java item components
+    parts.push(`id:"modifier_${i}_${Date.now()}"`);
+
+    return `{${parts.join(',')}}`;
+  }).join(',');
+
+  if (aStr) comps.push(`attribute_modifiers=[${aStr}]`);
+}
 
         // Fireworks
         if (fwRows.length) {
