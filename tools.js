@@ -1197,13 +1197,13 @@ const _TOOLS_CMDS = [
           .replace(/"/g,'\\"')
           .replace(/'/g,"\\'");
 
-        comps.push(`custom_name='{"text":"${escaped}"}'`);
+        comps.push(`custom_name={"text":"${escaped}"}`);
         }
       }
         if (loreLines.length) {
           const loreStr = loreLines.map(l => {
             const le = l.replace(/\\/g,'\\\\').replace(/"/g,'\\"').replace(/'/g,"\\'");
-            return `'{"text":"${le}"}'`;
+            return `{"text":"${le}"}`;
           }).join(',');
           comps.push(`lore=[${loreStr}]`);
         }
