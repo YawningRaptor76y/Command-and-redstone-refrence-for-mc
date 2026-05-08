@@ -1176,11 +1176,11 @@ const _TOOLS_CMDS = [
         const storedEnchs = enchRows.filter(r => r.enchSel.value && r.stored.checked);
         if (normalEnchs.length) {
           const entries = normalEnchs.map(r => `"${r.enchSel.value}":${parseInt(r.lvlIn.value)||1}`).join(',');
-          comps.push(`enchantments={levels:{${entries}}}`);
+          comps.push(`enchantments={${entries}}`);
         }
         if (storedEnchs.length) {
           const entries = storedEnchs.map(r => `"${r.enchSel.value}":${parseInt(r.lvlIn.value)||1}`).join(',');
-          comps.push(`stored_enchantments={levels:{${entries}}}`);
+          comps.push(`stored_enchantments={${entries}}`);
         }
 
         // Attribute modifiers
@@ -1204,7 +1204,6 @@ const _TOOLS_CMDS = [
               const safeSlot = validSlots.has(slot) ? slot : "mainhand";
 
               return `{
-                id:"custom:${shortName}_${i}",
                 type:"${r.attrSel.value}", 
                 amount:${safeAmount},
                 operation:"${r.opSel.value}",
