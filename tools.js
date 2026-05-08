@@ -3283,7 +3283,7 @@ const _TOOLS_CMDS = [
             const dur = Math.max(1, parseInt(r.durIn.value, 10) || 200);
             const amp = Math.max(0, Math.min(255, parseInt(r.ampIn.value, 10) || 0));
 
-            return `{Id:"${id}",Duration:${dur},Amplifier:${amp}b,Ambient:${r.ambChk.checked ? 1 : 0}b,ShowParticles:${r.partChk.checked ? 1 : 0}b}`;
+            return `{Id:"${id}",Duration:${dur}s,Amplifier:${amp}b,Ambient:${r.ambChk.checked ? 1 : 0}b,ShowParticles:${r.partChk.checked ? 1 : 0}b}`;
           })
           .join(',');
 
