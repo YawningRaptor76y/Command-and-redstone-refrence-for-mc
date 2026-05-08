@@ -1312,7 +1312,7 @@ slot:"${safeSlot}"
     }
 
     resetBtn.onclick = () => {
-      panel.querySelectorAll('input[type="text"],input[type="number"]').forEach(i => i.value = i.placeholder || '');
+      panel.querySelectorAll('input[type="text"],input[type="number"]').forEach(i => { if (i.dataset.defaultValue != null) { i.value = i.dataset.defaultValue; } else { i.value = ''; }});
       panel.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
       panel.querySelectorAll('textarea').forEach(t => t.value = '');
       panel.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
