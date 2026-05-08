@@ -1195,7 +1195,7 @@ const _TOOLS_CMDS = [
 
       return `{
 id:"custom:${shortName}_${i}",
-attribute:"${r.attrSel.value}", 
+type:"${r.attrSel.value}", 
 amount:${safeAmount},
 operation:"${r.opSel.value}",
 slot:"${safeSlot}"
