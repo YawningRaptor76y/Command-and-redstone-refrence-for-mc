@@ -1262,9 +1262,24 @@ if (attrRows.length) {
           if (validAttrs.length) {
             const opMap = { add_value: 0, add_multiplied_base: 1, add_multiplied_total: 2 };
             const slotMap = { any:0, mainhand:0, offhand:1, head:2, chest:3, legs:4, feet:5, body:6 };
-            nbt.AttributeModifiers = `[${validAttrs.map(r =>
-              `{AttributeName:"${r.attrSel.value}",Amount:${parseFloat(r.amountIn.value)||0},Operation:${opMap[r.opSel.value]||0}b,Slot:${slotMap[r.slotSel.value]||0}b}`
-            ).join(',')}]`;
+            nbt.AttributeModifiers = `[${validAttrs.map((r,i) => {
+  const amount = parseFloat(r.amountIn.value) || 0;
+  const op = opMap[r.opSel.value] || 0;
+
+  const parts = [
+    `AttributeName:"${r.attrSel.value}"`,
+    `Name:"${r.attrSel.value}"`,
+    `Amount:${amount}d`,
+    `Operation:${op}`,
+    `UUID:[I;${i+1},${i+2},${i+3},${i+4}]`
+  ];
+
+  if (r.slotSel.value && r.slotSel.value !== 'any') {
+    parts.push(`Slot:"${r.slotSel.value}"`);
+  }
+
+  return `{${parts.join(',')}}`;
+}).join(',')}]`;
           }
         }
 
