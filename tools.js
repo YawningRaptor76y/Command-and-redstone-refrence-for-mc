@@ -219,6 +219,32 @@ const _TOOLS_EFFECTS = [
   { id:'minecraft:infested',           label:'Infested',           bedrockId:39 }
 ];
 
+const EFFECT_IDS = {
+  minecraft:speed: 1,
+  minecraft:slowness: 2,
+  minecraft:haste: 3,
+  minecraft:mining_fatigue: 4,
+  minecraft:strength: 5,
+  minecraft:instant_health: 6,
+  minecraft:instant_damage: 7,
+  minecraft:jump_boost: 8,
+  minecraft:nausea: 9,
+  minecraft:regeneration: 10,
+  minecraft:resistance: 11,
+  minecraft:fire_resistance: 12,
+  minecraft:water_breathing: 13,
+  minecraft:invisibility: 14,
+  minecraft:blindness: 15,
+  minecraft:night_vision: 16,
+  minecraft:hunger: 17,
+  minecraft:weakness: 18,
+  minecraft:poison: 19,
+  minecraft:wither: 20,
+  minecraft:health_boost: 21,
+  minecraft:absorption: 22,
+  minecraft:saturation: 23
+};
+
 // ─── GAMERULES ────────────────────────────────────────────────────────────────
 const _TOOLS_GAMERULES_BEDROCK = [
   { rule:'announceAdvancements',    type:'bool',  default:'true'  },
@@ -904,7 +930,7 @@ const _TOOLS_CMDS = [
 
       // Count
       const countIn = inp('number', 'tool-input short', '1');
-      countIn.min = 1; countIn.max = _platform === 'java' ? 2304 : 255; countIn.value = '1';
+      countIn.min = 1; countIn.max = _platform === 'java' ? 99 : 255; countIn.value = '1';
       bd.appendChild(fieldRow('Count', countIn, false));
 
       // Data (Bedrock only)
@@ -1001,16 +1027,34 @@ const _TOOLS_CMDS = [
 
       const attrList = [
         ['minecraft:max_health','Max Health'],
+        ['minecraft:follow_range','Follow Range'],
+        ['minecraft:knockback_resistance','Knockback Resistance'],
+        ['minecraft:movement_speed','Movement Speed'],
+        ['minecraft:flying_speed','Flying Speed'],
         ['minecraft:attack_damage','Attack Damage'],
+        ['minecraft:attack_knockback','Attack Knockback'],
         ['minecraft:attack_speed','Attack Speed'],
         ['minecraft:armor','Armor'],
         ['minecraft:armor_toughness','Armor Toughness'],
-        ['minecraft:knockback_resistance','Knockback Resistance'],
-        ['minecraft:movement_speed','Movement Speed'],
         ['minecraft:luck','Luck'],
-        ['minecraft:max_absorption','Max Absorption'],
-        ['minecraft:block_break_speed','Block Break Speed (Java)'],
-        ['minecraft:mining_efficiency','Mining Efficiency (Java)']
+        ['minecraft:jump_strength','Jump Strength'],
+        ['minecraft:spawn_reinforcements','Spawn Reinforcements'],
+        ['minecraft:block_break_speed','Block Break Speed'],
+        ['minecraft:submerged_mining_speed','Submerged Mining Speed'],
+        ['minecraft:safe_fall_distance','Safe Fall Distance'],
+        ['minecraft:fall_damage_multiplier','Fall Damage Multiplier'],
+        ['minecraft:burning_time','Burning Time'],
+        ['minecraft:explosion_knockback_resistance','Explosion Knockback Resistance'],
+        ['minecraft:movement_efficiency','Movement Efficiency'],
+        ['minecraft:oxygen_bonus','Oxygen Bonus'],
+        ['minecraft:water_movement_efficiency','Water Movement Efficiency'],
+        ['minecraft:tempt_range','Tempt Range'],
+        ['minecraft:scale','Scale'],
+        ['minecraft:step_height','Step Height'],
+        ['minecraft:gravity','Gravity'],
+        ['minecraft:block_interaction_range','Block Interaction Range'],
+        ['minecraft:entity_interaction_range','Entity Interaction Range'],
+        ['minecraft:mining_efficiency','Mining Efficiency']
       ];
 
       function addAttrRow() {
@@ -1024,9 +1068,9 @@ const _TOOLS_CMDS = [
           ['add_multiplied_total','add_mult_total']
         ], 'add_value');
         const slotSel  = sel('tool-input medium', [
-          ['any','any'],['mainhand','mainhand'],['offhand','offhand'],
+          ['mainhand','mainhand'],['offhand','offhand'],
           ['head','head'],['chest','chest'],['legs','legs'],['feet','feet'],['body','body']
-        ], 'any');
+        ], 'mainhand');
         const rmBtn = el('button', 'repeat-remove', '✕');
         row.appendChild(attrSel); row.appendChild(amountIn); row.appendChild(opSel); row.appendChild(slotSel); row.appendChild(rmBtn);
         const obj = { row, attrSel, amountIn, opSel, slotSel };
@@ -1176,11 +1220,11 @@ const _TOOLS_CMDS = [
         const storedEnchs = enchRows.filter(r => r.enchSel.value && r.stored.checked);
         if (normalEnchs.length) {
           const entries = normalEnchs.map(r => `"${r.enchSel.value}":${parseInt(r.lvlIn.value)||1}`).join(',');
-          comps.push(`enchantments={${entries}}`);
+          comps.push(`minecraft:enchantments={levels:{${entries}}}`);
         }
         if (storedEnchs.length) {
           const entries = storedEnchs.map(r => `"${r.enchSel.value}":${parseInt(r.lvlIn.value)||1}`).join(',');
-          comps.push(`stored_enchantments={${entries}}`);
+          comps.push(`minecraft:stored_enchantments={levels:{${entries}}}`);
         }
 
         // Attribute modifiers
@@ -1203,16 +1247,9 @@ const _TOOLS_CMDS = [
 
               const safeSlot = validSlots.has(slot) ? slot : "mainhand";
 
-              return `{
-                id:"custom:${shortName}_${i}",
-                type:"${r.attrSel.value}", 
-                amount:${safeAmount},
-                operation:"${r.opSel.value}",
-                slot:"${safeSlot}"
-              }`;
-            }).join(',');
+              return `{id:"custom:${shortName}_${i}",type:"${r.attrSel.value}",amount:${safeAmount},operation:"${r.opSel.value}",slot:"${safeSlot}"}`; }).join(',');
 
-            comps.push(`attribute_modifiers=[${aStr}]`);
+            comps.push(`minecraft:attribute_modifiers={modifiers:[${aStr}]}`);
           }
         }
 
@@ -1380,14 +1417,28 @@ const _TOOLS_CMDS = [
       bd.appendChild(fieldRow('Entity ID *', entityAC.wrapper, true));
 
       const pos = ['X','Y','Z'].map(axis => {
-        const tildeChk = el('input'); tildeChk.type='checkbox'; tildeChk.className='tool-checkbox'; tildeChk.checked = true;
-        const coordIn  = inp('number', 'tool-input short', '0');
-        coordIn.step   = '0.5';
+        const tildeChk = el('input');
+        tildeChk.type = 'checkbox';
+        tildeChk.className = 'tool-checkbox';
+        tildeChk.checked = true;
+
+        const coordIn = inp('number', 'tool-input short', '0');
+        coordIn.step = '0.5';
+
         const wrap = el('div','field-row');
         const lbl  = el('div','field-label', axis);
-        const tl   = el('span'); tl.textContent='~'; tl.style.cssText='font-family:var(--mono);font-size:.75rem;color:var(--text-dim);';
-        wrap.appendChild(lbl); wrap.appendChild(tildeChk); wrap.appendChild(tl); wrap.appendChild(coordIn);
+
+        const tl = el('span');
+        tl.textContent = '~';
+        tl.style.cssText = 'font-family:var(--mono);font-size:.75rem;color:var(--text-dim);';
+
+        wrap.appendChild(lbl);
+        wrap.appendChild(tildeChk);
+        wrap.appendChild(tl);
+        wrap.appendChild(coordIn);
+
         bd.appendChild(wrap);
+
         return { tildeChk, coordIn };
       });
 
@@ -1594,7 +1645,7 @@ const _TOOLS_CMDS = [
 
       if (hVal > 0 && hVal !== 20)  nbt.Health = `${hVal}f`;
       if (mhVal > 0 && mhVal !== 20) {
-        nbt.Attributes = `[{id:"minecraft:max_health",Base:${mhVal}d}]`;
+        nbt.Attributes = `[   {Name:"minecraft:generic.max_health",Base:${mhVal}d} ]`;
       }
       if (invulnCB && invulnCB.checked)  nbt.Invulnerable = '1b';
       if (persistCB && persistCB.checked) nbt.PersistenceRequired = '1b';
@@ -1611,10 +1662,27 @@ const _TOOLS_CMDS = [
 
       // Effects
       if (effectRows.length) {
-        const effStr = effectRows.filter(r => r.effSel.value).map(r => {
-          return `{id:"${r.effSel.value}",duration:${parseInt(r.durIn.value)||200},amplifier:${parseInt(r.ampIn.value)||0},ambient:${r.ambChk.checked},show_particles:${r.partChk.checked}}`;
-        }).join(',');
-        if (effStr) nbt.active_effects = `[${effStr}]`;
+        const effStr = effectRows
+          .filter(r => r.effSel.value)
+          .map(r => {
+            const id = EFFECT_IDS[r.effSel.value] ?? 1;
+
+            const dur = Math.max(1, parseInt(r.durIn.value, 10) || 200);
+            const amp = Math.max(0, Math.min(255, parseInt(r.ampIn.value, 10) || 0));
+
+            return `{
+              Id:${id}b,
+              Duration:${dur},
+              Amplifier:${amp}b,
+              Ambient:${r.ambChk.checked ? 1 : 0}b,
+              ShowParticles:${r.partChk.checked ? 1 : 0}b
+            }`;
+          })
+          .join(',');
+
+        if (effStr) {
+          nbt.ActiveEffects = `[${effStr}]`;
+        }
       }
 
       // Passengers
