@@ -1819,29 +1819,29 @@ const _TOOLS_EFFECTS = [
 ];
 
 const EFFECT_IDS = {
-  "minecraft:speed": 1,
-  "minecraft:slowness": 2,
-  "minecraft:haste": 3,
-  "minecraft:mining_fatigue": 4,
-  "minecraft:strength": 5,
-  "minecraft:instant_health": 6,
-  "minecraft:instant_damage": 7,
-  "minecraft:jump_boost": 8,
-  "minecraft:nausea": 9,
-  "minecraft:regeneration": 10,
-  "minecraft:resistance": 11,
-  "minecraft:fire_resistance": 12,
-  "minecraft:water_breathing": 13,
-  "minecraft:invisibility": 14,
-  "minecraft:blindness": 15,
-  "minecraft:night_vision": 16,
-  "minecraft:hunger": 17,
-  "minecraft:weakness": 18,
-  "minecraft:poison": 19,
-  "minecraft:wither": 20,
-  "minecraft:health_boost": 21,
-  "minecraft:absorption": 22,
-  "minecraft:saturation": 23,
+  "minecraft:speed": "minecraft:speed",
+  "minecraft:slowness": "minecraft:slowness",
+  "minecraft:haste": "minecraft:haste",
+  "minecraft:mining_fatigue": "minecraft:mining_fatigue",
+  "minecraft:strength": "minecraft:strength",
+  "minecraft:instant_health": "minecraft:instant_health",
+  "minecraft:instant_damage": "minecraft:instant_damage",
+  "minecraft:jump_boost": "minecraft:jump_boost",
+  "minecraft:nausea": "minecraft:nausea",
+  "minecraft:regeneration": "minecraft:regeneration",
+  "minecraft:resistance": "minecraft:resistance",
+  "minecraft:fire_resistance": "minecraft:fire_resistance",
+  "minecraft:water_breathing": "minecraft:water_breathing",
+  "minecraft:invisibility": "minecraft:invisibility",
+  "minecraft:blindness": "minecraft:blindness",
+  "minecraft:night_vision": "minecraft:night_vision",
+  "minecraft:hunger": "minecraft:hunger",
+  "minecraft:weakness": "minecraft:weakness",
+  "minecraft:poison": "minecraft:poison",
+  "minecraft:wither": "minecraft:wither",
+  "minecraft:health_boost": "minecraft:health_boost",
+  "minecraft:absorption": "minecraft:absorption",
+  "minecraft:saturation": "minecraft:saturation",
 };
 
 // ─── GAMERULES ────────────────────────────────────────────────────────────────
@@ -3151,7 +3151,10 @@ const _TOOLS_CMDS = [
     body.appendChild(effectSection);
 
     // ── Passengers (Java only) ────────────────────────────────────────────
+    let passengerBody = null;
+
     const passengerSection = fieldSection('Passengers', bd => {
+      passengerBody = bd;
       if (_platform === 'bedrock') {
         bd.appendChild(el('div','platform-only-note','Bedrock /summon does not support NBT passengers. Use Java mode to build passenger chains.'));
         return;
@@ -3177,7 +3180,6 @@ const _TOOLS_CMDS = [
       if (!entity) return '';
 
       // Position
-      const posFields = coreSection.querySelectorAll('.field-row');
       let posStr = '~ ~ ~';
       const posRows = [];
       coreSection.querySelectorAll('.field-row').forEach((r,i) => {
@@ -3187,7 +3189,11 @@ const _TOOLS_CMDS = [
         posStr = posRows.map(r => {
           const chk = r.querySelector('.tool-checkbox');
           const num = r.querySelector('input[type="number"]');
-          return (chk && chk.checked) ? '~' : (num ? num.value : '~');
+          if (chk && chk.checked) {
+            const v = num ? num.value.trim() : '';
+            return v ? `~${v}` : '~';
+          }
+        return num ? (num.value.trim() || '0') : '0';
         }).join(' ');
       }
 
@@ -3214,7 +3220,7 @@ const _TOOLS_CMDS = [
           JSON.parse(cnVal);
           cnFormatted = `'${cnVal}'`;
         } catch {
-          cnFormatted = `'{"text":"${cnVal.replace(/\\/g,'\\\\').replace(/"/g,'\\"').replace(/'/g,"\\'")}"}'`;
+          const safe = JSON.stringify({ text: cnVal }); cnFormatted = `'${safe.replace(/'/g, "\\'")}'`;
         }
         nbt.CustomName = cnFormatted;
       }
@@ -3244,7 +3250,15 @@ const _TOOLS_CMDS = [
 
       if (hVal > 0 && hVal !== 20)  nbt.Health = `${hVal}f`;
       if (mhVal > 0 && mhVal !== 20) {
-        nbt.Attributes = `[   {Name:"minecraft:generic.max_health",Base:${mhVal}d} ]`;
+        const attributes = [];
+
+        attributes.push(
+          `{Name:"minecraft:generic.max_health",Base:${mhVal}d}`
+        );
+
+        if (attributes.length) {
+          nbt.Attributes = `[${attributes.join(',')}]`;
+      }
       }
       if (invulnCB && invulnCB.checked)  nbt.Invulnerable = '1b';
       if (persistCB && persistCB.checked) nbt.PersistenceRequired = '1b';
@@ -3269,13 +3283,7 @@ const _TOOLS_CMDS = [
             const dur = Math.max(1, parseInt(r.durIn.value, 10) || 200);
             const amp = Math.max(0, Math.min(255, parseInt(r.ampIn.value, 10) || 0));
 
-            return `{
-              Id:${id}b,
-              Duration:${dur},
-              Amplifier:${amp}b,
-              Ambient:${r.ambChk.checked ? 1 : 0}b,
-              ShowParticles:${r.partChk.checked ? 1 : 0}b
-            }`;
+            return `{Id:${id}b,Duration:${dur},Amplifier:${amp}b,Ambient:${r.ambChk.checked ? 1 : 0}b,ShowParticles:${r.partChk.checked ? 1 : 0}b}`;
           })
           .join(',');
 
@@ -3285,7 +3293,7 @@ const _TOOLS_CMDS = [
       }
 
       // Passengers
-      const passengerOutput = collectPassengers(passengerSection);
+      const passengerOutput = collectPassengers(passengerBody);
       if (passengerOutput) nbt.Passengers = passengerOutput;
 
       // Extra NBT
@@ -3316,9 +3324,25 @@ const _TOOLS_CMDS = [
       panel.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
       effectRows.length = 0;
       effectSection.querySelectorAll('.repeat-row').forEach(r => r.remove());
-      passengerSection.querySelectorAll('.passenger-block').forEach(r => r.remove());
-    };
+      passengerBody.innerHTML = '';
 
+      if (_platform === 'bedrock') {
+        passengerBody.appendChild(
+          el(
+            'div',
+            'platform-only-note',
+            'Bedrock /summon does not support NBT passengers. Use Java mode to build passenger chains.'
+          )
+        );
+      } else {
+        renderPassengerBlock(
+          passengerBody,
+          0,
+          () => doSummonRefresh()
+        );
+      }
+      doSummonRefresh();
+    }
     panel.addEventListener('input',  doSummonRefresh);
     panel.addEventListener('change', doSummonRefresh);
 
@@ -3358,12 +3382,13 @@ const _TOOLS_CMDS = [
       block.appendChild(checkRow('NoAI', pNoAIChk));
 
       // Recursive sub-passengers
-      const subContainer = el('div');
+      const subContainer = el('div', 'passenger-subcontainer');
       block.appendChild(subContainer);
       renderPassengerBlock(subContainer, depth + 1, onchange);
 
       rmBtn.onclick = () => { container.removeChild(block); if (onchange) onchange(); };
       container.insertBefore(block, addBtn);
+      if (onchange) onchange();
       if (onchange) { block.addEventListener('input',  onchange); block.addEventListener('change', onchange); }
     };
   }
@@ -3372,17 +3397,33 @@ const _TOOLS_CMDS = [
     const blocks = container.querySelectorAll(':scope > .passenger-block');
     if (!blocks.length) return '';
     const parts = Array.from(blocks).map(b => {
-      const entityInput = b.querySelector('input[type="text"]');
-      const entity = entityInput ? entityInput.value.trim() : '';
+      const rows = b.querySelectorAll(':scope > .field-row');
+
+      const entityInput = rows[0]
+        ? rows[0].querySelector('input[type="text"]')
+        : null;
+
+      const nameInput = rows[1]
+        ? rows[1].querySelector('input[type="text"]')
+        : null;
+
+      const entity = entityInput
+        ? entityInput.value.trim()
+        : '';
+
       if (!entity) return null;
-      const nameInputs = b.querySelectorAll('input[type="text"]');
-      const nameIn = nameInputs[1] ? nameInputs[1].value.trim() : '';
-      const noAICB = b.querySelector('.tool-checkbox');
+
+      const nameIn = nameInput
+        ? nameInput.value.trim()
+        : '';
+      const noAICB = b.querySelector(
+        ':scope > .tool-checkbox-row .tool-checkbox'
+      );
       const nbt = {};
       if (nameIn) nbt.CustomName = `'${JSON.stringify({"text":nameIn})}'`;
       if (noAICB && noAICB.checked) nbt.NoAI = '1b';
       // Recurse into sub-passengers
-      const subContainer = b.querySelector(':scope > div:last-of-type');
+      const subContainer = b.querySelector(':scope > .passenger-subcontainer');
       if (subContainer) {
         const subPass = collectPassengers(subContainer);
         if (subPass) nbt.Passengers = subPass;
