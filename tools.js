@@ -1911,4 +1911,259 @@ const _TOOLS_CMDS = [
             const xIn = inp('text','tool-input short','~'); const yIn = inp('text','tool-input short','~'); const zIn = inp('text','tool-input short','~');
             fieldsContainer.appendChild(el('span','field-label','x')); fieldsContainer.appendChild(xIn);
             fieldsContainer.appendChild(el('span','field-label','y')); fieldsContainer.appendChild(yIn);
-            fieldsContainer.appendChild(el('span','field-label','z')); fieldsContainer.appendChild
+            fieldsContainer.appendChild(el('span','field-label','z')); fieldsContainer.appendChild(zIn);
+            obj.xIn=xIn; obj.yIn=yIn; obj.zIn=zIn;
+          } else if (['facing_entity'].includes(action)) {
+            const tIn = inp('text','tool-input short','@p');
+            const feetEyesSel = sel('tool-input medium',[['feet','feet'],['eyes','eyes']],'feet');
+            fieldsContainer.appendChild(el('span','field-label','entity')); fieldsContainer.appendChild(tIn);
+            fieldsContainer.appendChild(el('span','field-label','anchor')); fieldsContainer.appendChild(feetEyesSel);
+            obj.tIn=tIn; obj.feetEyesSel=feetEyesSel;
+          } else if (['in'].includes(action)) {
+            const dimIn = inp('text','tool-input medium','minecraft:overworld');
+            fieldsContainer.appendChild(el('span','field-label','dimension')); fieldsContainer.appendChild(dimIn);
+            obj.dimIn=dimIn;
+          } else if (['anchored'].includes(action)) {
+            const anchorSel = sel('tool-input medium',[['eyes','eyes'],['feet','feet']],'eyes');
+            fieldsContainer.appendChild(el('span','field-label','anchor')); fieldsContainer.appendChild(anchorSel);
+            obj.anchorSel=anchorSel;
+          } else if (['rotated'].includes(action)) {
+            const yawIn = inp('text','tool-input short','0'); const pitchIn = inp('text','tool-input short','0');
+            fieldsContainer.appendChild(el('span','field-label','yaw')); fieldsContainer.appendChild(yawIn);
+            fieldsContainer.appendChild(el('span','field-label','pitch')); fieldsContainer.appendChild(pitchIn);
+            obj.yawIn=yawIn; obj.pitchIn=pitchIn;
+          } else if (['store_result','store_success'].includes(action)) {
+            const storeTypeSel = sel('tool-input medium',[['score','score'],['entity','entity'],['block','block'],['bossbar','bossbar'],['storage','storage']],'score');
+            fieldsContainer.appendChild(el('span','field-label','store in')); fieldsContainer.appendChild(storeTypeSel);
+            // For score: target + objective
+            const scoreTarget = inp('text','tool-input short','@s');
+            const scoreObj    = inp('text','tool-input short','myobj');
+            fieldsContainer.appendChild(el('span','field-label','target')); fieldsContainer.appendChild(scoreTarget);
+            fieldsContainer.appendChild(el('span','field-label','obj'));    fieldsContainer.appendChild(scoreObj);
+            obj.storeTypeSel=storeTypeSel; obj.scoreTarget=scoreTarget; obj.scoreObj=scoreObj;
+          }
+          if (onChange) { fieldsContainer.addEventListener('input', onChange); fieldsContainer.addEventListener('change', onChange); }
+        }
+
+        rebuildFields();
+        if (!isRun) actionSel.addEventListener('change', () => { rebuildFields(); if (onChange) onChange(); });
+
+        const rmBtn = isRun ? null : el('button','repeat-remove','✕');
+        stepEl.appendChild(actionSel);
+        stepEl.appendChild(fieldsContainer);
+        if (rmBtn) {
+          rmBtn.onclick = () => {
+            stepsContainer.removeChild(stepEl);
+            executeSteps.splice(executeSteps.indexOf(obj), 1);
+            if (onChange) onChange();
+          };
+          stepEl.appendChild(rmBtn);
+        }
+
+        return stepEl;
+      }
+
+      // Initial: one "as" step + "run" step
+      const asStep  = addStep(false);
+      const runStep = addStep(true);
+      stepsContainer.appendChild(asStep);
+      stepsContainer.appendChild(runStep);
+
+      const addStepBtn = el('button','repeat-add','+ Add Step');
+      addStepBtn.onclick = () => {
+        const newStep = addStep(false);
+        // Insert before run step
+        stepsContainer.insertBefore(newStep, runStep);
+        if (onChange) onChange();
+      };
+      container.appendChild(addStepBtn);
+      container.appendChild(stepsContainer);
+    }
+
+    function assembleExecute() {
+      const tokens = [];
+      for (const obj of executeSteps) {
+        const action = obj.isRun ? 'run' : obj.actionSel.value;
+        if (action === 'run') {
+          tokens.push('run');
+          tokens.push((obj.runIn ? obj.runIn.value.trim() : '') || 'say hello');
+          break; // run is always last
+        } else if (['as','at'].includes(action)) {
+          tokens.push(action); tokens.push(obj.tIn ? obj.tIn.value.trim() || '@a' : '@a');
+        } else if (['if_entity','unless_entity'].includes(action)) {
+          const sub = action.startsWith('if') ? 'if' : 'unless';
+          tokens.push(sub); tokens.push('entity'); tokens.push(obj.tIn ? obj.tIn.value.trim() || '@p' : '@p');
+        } else if (['if_block','unless_block'].includes(action)) {
+          const sub = action.startsWith('if') ? 'if' : 'unless';
+          tokens.push(sub); tokens.push('block');
+          tokens.push(obj.xIn ? obj.xIn.value.trim()||'~' : '~');
+          tokens.push(obj.yIn ? obj.yIn.value.trim()||'~' : '~');
+          tokens.push(obj.zIn ? obj.zIn.value.trim()||'~' : '~');
+          tokens.push(obj.blkIn ? obj.blkIn.value.trim()||'minecraft:stone' : 'minecraft:stone');
+        } else if (['if_blocks','unless_blocks'].includes(action)) {
+          const sub = action.startsWith('if') ? 'if' : 'unless';
+          tokens.push(sub); tokens.push('blocks');
+          if (obj.blockInputs) {
+            ['bx','by','bz','ex','ey','ez','dx','dy','dz'].forEach(k => tokens.push((obj.blockInputs[k]||{value:'~'}).value.trim()||'~'));
+          }
+          tokens.push(obj.modeSel ? obj.modeSel.value : 'all');
+        } else if (action === 'positioned') {
+          tokens.push('positioned');
+          tokens.push(obj.xIn ? obj.xIn.value.trim()||'~' : '~');
+          tokens.push(obj.yIn ? obj.yIn.value.trim()||'~' : '~');
+          tokens.push(obj.zIn ? obj.zIn.value.trim()||'~' : '~');
+        } else if (action === 'facing') {
+          tokens.push('facing');
+          tokens.push(obj.xIn ? obj.xIn.value.trim()||'~' : '~');
+          tokens.push(obj.yIn ? obj.yIn.value.trim()||'~' : '~');
+          tokens.push(obj.zIn ? obj.zIn.value.trim()||'~' : '~');
+        } else if (action === 'facing_entity') {
+          tokens.push('facing entity');
+          tokens.push(obj.tIn ? obj.tIn.value.trim()||'@p' : '@p');
+          tokens.push(obj.feetEyesSel ? obj.feetEyesSel.value : 'feet');
+        } else if (action === 'in') {
+          tokens.push('in');
+          tokens.push(obj.dimIn ? obj.dimIn.value.trim()||'minecraft:overworld' : 'minecraft:overworld');
+        } else if (action === 'anchored') {
+          tokens.push('anchored');
+          tokens.push(obj.anchorSel ? obj.anchorSel.value : 'eyes');
+        } else if (action === 'rotated') {
+          tokens.push('rotated');
+          tokens.push(obj.yawIn ? obj.yawIn.value.trim()||'0' : '0');
+          tokens.push(obj.pitchIn ? obj.pitchIn.value.trim()||'0' : '0');
+        } else if (['store_result','store_success'].includes(action)) {
+          const sub = action === 'store_result' ? 'result' : 'success';
+          tokens.push('store'); tokens.push(sub); tokens.push('score');
+          tokens.push(obj.scoreTarget ? obj.scoreTarget.value.trim()||'@s' : '@s');
+          tokens.push(obj.scoreObj    ? obj.scoreObj.value.trim()||'myobj' : 'myobj');
+        }
+      }
+      return tokens.length ? `/execute ${tokens.join(' ')}` : '';
+    }
+
+    // ── Command output assembly (non-execute) ─────────────────────────────
+    function assembleCmd() {
+      if (!selectedCmd) return '';
+      if (selectedCmd.special === 'execute') return assembleExecute();
+
+      const paramsToShow = selectedCmd.params.filter(p => {
+        if (_platform === 'java'    && p.bedrockOnly) return false;
+        if (_platform === 'bedrock' && p.javaOnly)    return false;
+        return true;
+      });
+
+      const prefix = selectedCmd.id.includes('_')
+        ? '/' + selectedCmd.id.replace(/_([a-z])/g, ' $1') + ' '
+        : '/' + selectedCmd.id + ' ';
+
+      const parts = paramsToShow.map(p => {
+        const inputEl = fieldInputs[p.key];
+        if (!inputEl) return null;
+        let val;
+        if (p.type === 'bool') {
+          val = inputEl.checked ? 'true' : null;
+          if (!p.required && !inputEl.checked) return null;
+          val = inputEl.checked ? 'true' : 'false';
+        } else if (p.type === 'enum' || p.type === 'effect' || p.type === 'enchantment' || p.type === 'gamerule') {
+          val = inputEl.value;
+          if (!val) return p.required ? null : null;
+        } else {
+          val = typeof inputEl.value === 'string' ? inputEl.value.trim() : '';
+          if (!val) return p.required ? null : null;
+        }
+        return val;
+      });
+
+      // If any required param is missing, still output best effort
+      const tokens = parts.filter(p => p != null);
+      return prefix.trimEnd() + (tokens.length ? ' ' + tokens.join(' ') : '');
+    }
+
+    // ── Output block ──────────────────────────────────────────────────────
+    const outSection = el('div','tool-output-section');
+    const outHeader  = el('div','tool-output-header');
+    const outLabel   = el('span','','Output');
+    const outActions = el('div','tool-output-actions');
+    const copyBtn    = el('button','tool-btn','Copy');
+    const resetBtn2  = el('button','tool-btn','Reset');
+    outActions.appendChild(copyBtn); outActions.appendChild(resetBtn2);
+    outHeader.appendChild(outLabel); outHeader.appendChild(outActions);
+    const outBlock = el('div','tool-output-block empty','— select a command and fill in the fields —');
+    outSection.appendChild(outHeader); outSection.appendChild(outBlock);
+
+    copyBtn.onclick = () => {
+      if (outBlock.classList.contains('empty')) return;
+      navigator.clipboard.writeText(outBlock.textContent).then(() => {
+        copyBtn.classList.add('copy-success'); copyBtn.textContent = 'Copied';
+        setTimeout(() => { copyBtn.classList.remove('copy-success'); copyBtn.textContent = 'Copy'; }, 1500);
+      });
+    };
+    resetBtn2.onclick = () => {
+      formArea.querySelectorAll('input[type="text"],input[type="number"]').forEach(i => i.value = i.placeholder||'');
+      formArea.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
+      formArea.querySelectorAll('textarea').forEach(t => t.value = '');
+      formArea.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
+      doRefresh();
+    };
+
+    body.appendChild(outSection);
+
+    function doRefresh() {
+      const out = assembleCmd();
+      if (out) { outBlock.textContent = out; outBlock.classList.remove('empty'); }
+      else     { outBlock.textContent = '— select a command and fill in the fields —'; outBlock.classList.add('empty'); }
+    }
+
+    searchIn.addEventListener('input', () => { rebuildPicker(); doRefresh(); });
+    formArea.addEventListener('input',  doRefresh);
+    formArea.addEventListener('change', doRefresh);
+
+    // Initial render
+    rebuildPicker();
+
+    panel.appendChild(body);
+
+    main.querySelectorAll('.group').forEach(e => e.remove());
+    const noRes = document.getElementById('no-results');
+    if (noRes) noRes.style.display = 'none';
+    main.appendChild(panel);
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // RENDER DISPATCHER
+  // ─────────────────────────────────────────────────────────────────────────
+  function renderTool(main) {
+    main.querySelectorAll('.group').forEach(e => e.remove());
+    // Remove any existing tool panel
+    const existing = main.querySelector('.tool-panel');
+    if (existing) existing.remove();
+    const noRes = document.getElementById('no-results');
+    if (noRes) noRes.style.display = 'none';
+
+    if      (_activeTool === 'give')   renderGiveTool(main);
+    else if (_activeTool === 'summon') renderSummonTool(main);
+    else if (_activeTool === 'cmd')    renderCmdTool(main);
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // REGISTER
+  // ─────────────────────────────────────────────────────────────────────────
+  SECTIONS.register({
+    id:            'tools',
+    label:         'Toolbox',
+    badge:         'Minecraft · Toolbox & Utilities',
+    commandPrefix: '',
+    accent: {
+      '--blue':      '#cc66ff',
+      '--blue-dim':  '#5c1a8a',
+      '--blue-glow': 'rgba(204,102,255,0.13)'
+    },
+    filters:    [],
+    groupOrder: [],
+    groupMeta:  {},
+    commands:   [],
+    renderTool:    renderTool,
+    renderSidebar: renderSidebar
+  });
+
+})();
