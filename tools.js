@@ -1204,6 +1204,7 @@ const _TOOLS_CMDS = [
               const safeSlot = validSlots.has(slot) ? slot : "mainhand";
 
               return `{
+                id:"custom:${shortName}_${i}",
                 type:"${r.attrSel.value}", 
                 amount:${safeAmount},
                 operation:"${r.opSel.value}",
