@@ -1171,14 +1171,35 @@ const _TOOLS_CMDS = [
 
         // Attribute modifiers
         if (attrRows.length) {
-          const validAttrs = attrRows.filter(r => r.attrSel.value);
-          if (validAttrs.length) {
-            const aStr = validAttrs.map((r, i) => {
-              const shortName = r.attrSel.value.replace('minecraft:','').replace('.','_');
-              return `{id:"custom:${shortName}_${i}",type:"${r.attrSel.value}",amount:${parseFloat(r.amountIn.value)||0},operation:"${r.opSel.value}",slot:"${r.slotSel.value}"}`;
-            }).join(',');
-            comps.push(`attribute_modifiers=[${aStr}]`);
-          }
+  const validAttrs = attrRows.filter(r => r.attrSel.value);
+
+  if (validAttrs.length) {
+    const aStr = validAttrs.map((r, i) => {
+      const shortName = r.attrSel.value
+        .replace('minecraft:', '')
+        .replace(/[^a-z0-9_]/g, '_'); // FIX: full sanitization
+
+      const amount = Number(r.amountIn.value);
+      const safeAmount = Number.isFinite(amount) ? amount : 0;
+
+      const slot = r.slotSel.value;
+      const validSlots = new Set([
+        "mainhand","offhand","head","chest","legs","feet","body"
+      ]);
+
+      const safeSlot = validSlots.has(slot) ? slot : "mainhand";
+
+      return `{
+id:"custom:${shortName}_${i}",
+attribute:"${r.attrSel.value}", 
+amount:${safeAmount},
+operation:"${r.opSel.value}",
+slot:"${safeSlot}"
+}`;
+    }).join(',');
+
+    comps.push(`attribute_modifiers=[${aStr}]`);
+  }
         }
 
         // Fireworks
