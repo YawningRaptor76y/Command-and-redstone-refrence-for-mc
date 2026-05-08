@@ -110,10 +110,10 @@ const _TOOLS_ENTITIES = [
   'minecraft:squid','minecraft:glow_squid','minecraft:axolotl',
   'minecraft:mooshroom','minecraft:strider','minecraft:goat','minecraft:frog',
   'minecraft:tadpole','minecraft:allay','minecraft:camel','minecraft:sniffer',
-  'minecraft:armadillo','minecraft:boar',
+  'minecraft:armadillo',
   // Neutral
   'minecraft:iron_golem','minecraft:snow_golem','minecraft:villager','minecraft:wandering_trader',
-  'minecraft:zombie_villager','minecraft:piglin_brute',
+  'minecraft:zombie_villager',
   // Bosses
   'minecraft:ender_dragon','minecraft:wither',
   // Projectiles / Vehicles
@@ -138,7 +138,7 @@ const _TOOLS_ENCHANTS = [
   { id:'minecraft:knockback',         label:'Knockback',           bedrockId:13, maxLevel:2,  slots:['mainhand','sword'] },
   { id:'minecraft:fire_aspect',       label:'Fire Aspect',         bedrockId:14, maxLevel:2,  slots:['mainhand','sword'] },
   { id:'minecraft:looting',           label:'Looting',             bedrockId:15, maxLevel:3,  slots:['mainhand','sword'] },
-  { id:'minecraft:sweeping_edge',     label:'Sweeping Edge',       bedrockId:22, maxLevel:3,  slots:['mainhand','sword'] },
+  { id:'minecraft:sweeping_edge',     label:'Sweeping Edge',       bedrockId:22, maxLevel:3,  slots:['mainhand','sword'], javaOnly:true },
   { id:'minecraft:efficiency',        label:'Efficiency',          bedrockId:15, maxLevel:5,  slots:['mainhand','pickaxe','shovel','axe','hoe','shears'] },
   { id:'minecraft:silk_touch',        label:'Silk Touch',          bedrockId:16, maxLevel:1,  slots:['mainhand','pickaxe','shovel','axe','hoe','shears'] },
   { id:'minecraft:unbreaking',        label:'Unbreaking',          bedrockId:17, maxLevel:3,  slots:['any'] },
@@ -156,9 +156,9 @@ const _TOOLS_ENCHANTS = [
   { id:'minecraft:multishot',         label:'Multishot',           bedrockId:33, maxLevel:1,  slots:['mainhand','crossbow'] },
   { id:'minecraft:quick_charge',      label:'Quick Charge',        bedrockId:35, maxLevel:3,  slots:['mainhand','crossbow'] },
   { id:'minecraft:piercing',          label:'Piercing',            bedrockId:34, maxLevel:4,  slots:['mainhand','crossbow'] },
-  { id:'minecraft:density',           label:'Density',             bedrockId:36, maxLevel:5,  slots:['mainhand','mace'] },
-  { id:'minecraft:breach',            label:'Breach',              bedrockId:37, maxLevel:4,  slots:['mainhand','mace'] },
-  { id:'minecraft:wind_burst',        label:'Wind Burst',          bedrockId:38, maxLevel:3,  slots:['mainhand','mace'] },
+  { id:'minecraft:density',           label:'Density',             bedrockId:36, maxLevel:5,  slots:['mainhand','mace'], javaOnly:true },
+  { id:'minecraft:breach',            label:'Breach',              bedrockId:37, maxLevel:4,  slots:['mainhand','mace'], javaOnly:true },
+  { id:'minecraft:wind_burst',        label:'Wind Burst',          bedrockId:38, maxLevel:3,  slots:['mainhand','mace'], javaOnly:true },
   { id:'minecraft:protection',        label:'Protection',          bedrockId:0,  maxLevel:4,  slots:['armor','head','chest','legs','feet'] },
   { id:'minecraft:fire_protection',   label:'Fire Protection',     bedrockId:1,  maxLevel:4,  slots:['armor','head','chest','legs','feet'] },
   { id:'minecraft:feather_falling',   label:'Feather Falling',     bedrockId:2,  maxLevel:4,  slots:['feet'] },
@@ -168,10 +168,10 @@ const _TOOLS_ENCHANTS = [
   { id:'minecraft:aqua_affinity',     label:'Aqua Affinity',       bedrockId:7,  maxLevel:1,  slots:['head'] },
   { id:'minecraft:thorns',            label:'Thorns',              bedrockId:5,  maxLevel:3,  slots:['armor','head','chest','legs','feet'] },
   { id:'minecraft:depth_strider',     label:'Depth Strider',       bedrockId:8,  maxLevel:3,  slots:['feet'] },
-  { id:'minecraft:frost_walker',      label:'Frost Walker',        bedrockId:25, maxLevel:2,  slots:['feet'] },
-  { id:'minecraft:binding_curse',     label:'Curse of Binding',    bedrockId:27, maxLevel:1,  slots:['any'] },
+  { id:'minecraft:frost_walker',      label:'Frost Walker',        bedrockId:25, maxLevel:2,  slots:['feet'], javaOnly:true },
+  { id:'minecraft:binding_curse',     label:'Curse of Binding',    bedrockId:27, maxLevel:1,  slots:['any'], javaOnly:true },
   { id:'minecraft:soul_speed',        label:'Soul Speed',          bedrockId:32, maxLevel:3,  slots:['feet'] },
-  { id:'minecraft:swift_sneak',       label:'Swift Sneak',         bedrockId:0,  maxLevel:3,  slots:['legs'] },
+  { id:'minecraft:swift_sneak',       label:'Swift Sneak',         bedrockId:0,  maxLevel:3,  slots:['legs'], javaOnly:true },
   { id:'minecraft:mending',           label:'Mending',             bedrockId:26, maxLevel:1,  slots:['any'] },
   { id:'minecraft:vanishing_curse',   label:'Curse of Vanishing',  bedrockId:28, maxLevel:1,  slots:['any'] }
 ];
@@ -888,6 +888,7 @@ const _TOOLS_CMDS = [
     const body = el('div', 'tool-body');
 
     // ── Core fields ──────────────────────────────────────────────────────
+    let coreRefs;
     const coreSection = fieldSection('Core', bd => {
       // Target
       const targetIn = inp('text', 'tool-input', '@p');
@@ -903,11 +904,13 @@ const _TOOLS_CMDS = [
       bd.appendChild(fieldRow('Count', countIn, false));
 
       // Data (Bedrock only)
-      const dataRow = fieldRow('Data Value', inp('number', 'tool-input short', '0'), false);
-      dataRow.querySelector('input').min = 0; dataRow.querySelector('input').value = '0';
+      const dataIn = inp('number', 'tool-input short', '0');
+      dataIn.min = 0; dataIn.value = '0';
+      const dataRow = fieldRow('Data Value (Bedrock)', dataIn, false);
+      dataRow.style.display = _platform === 'bedrock' ? '' : 'none';
       bd.appendChild(dataRow);
 
-      return { targetIn, itemIn: itemAC.input, countIn, dataIn: dataRow.querySelector('input'), dataRow };
+      coreRefs = { targetIn, itemIn: itemAC.input, countIn, dataIn, dataRow };
     });
     body.appendChild(coreSection);
 
@@ -993,17 +996,17 @@ const _TOOLS_CMDS = [
       const addBtn = el('button', 'repeat-add', '+ Add Modifier');
 
       const attrList = [
-        ['minecraft:generic.max_health','Max Health'],
-        ['minecraft:generic.attack_damage','Attack Damage'],
-        ['minecraft:generic.attack_speed','Attack Speed'],
-        ['minecraft:generic.armor','Armor'],
-        ['minecraft:generic.armor_toughness','Armor Toughness'],
-        ['minecraft:generic.knockback_resistance','Knockback Resistance'],
-        ['minecraft:generic.movement_speed','Movement Speed'],
-        ['minecraft:generic.luck','Luck'],
-        ['minecraft:generic.max_absorption','Max Absorption'],
-        ['minecraft:player.block_break_speed','Block Break Speed (Java)'],
-        ['minecraft:player.mining_efficiency','Mining Efficiency (Java)']
+        ['minecraft:max_health','Max Health'],
+        ['minecraft:attack_damage','Attack Damage'],
+        ['minecraft:attack_speed','Attack Speed'],
+        ['minecraft:armor','Armor'],
+        ['minecraft:armor_toughness','Armor Toughness'],
+        ['minecraft:knockback_resistance','Knockback Resistance'],
+        ['minecraft:movement_speed','Movement Speed'],
+        ['minecraft:luck','Luck'],
+        ['minecraft:max_absorption','Max Absorption'],
+        ['minecraft:block_break_speed','Block Break Speed (Java)'],
+        ['minecraft:mining_efficiency','Mining Efficiency (Java)']
       ];
 
       function addAttrRow() {
@@ -1031,6 +1034,10 @@ const _TOOLS_CMDS = [
       addBtn.onclick = addAttrRow;
       repeatBlock.appendChild(addBtn);
       bd.appendChild(repeatBlock);
+      const attrNote = el('div','platform-only-note',
+        'Attribute Modifiers via /give NBT are Java-only (1.20.5+ component format). Bedrock does not support item attribute modifiers through /give.');
+      attrNote.style.display = _platform === 'bedrock' ? '' : 'none';
+      bd.appendChild(attrNote);
     }, true);
     body.appendChild(attrSection);
 
@@ -1052,7 +1059,6 @@ const _TOOLS_CMDS = [
     const fwSection = fieldSection('Fireworks', bd => {
       const flightIn = inp('number', 'tool-input short', '1');
       flightIn.min = 0; flightIn.max = 255; flightIn.value = '1';
-      bd.appendChild(fieldRow('Flight Duration', flightIn, false));
 
       const repeatBlock = el('div', 'repeat-block');
       const addBtn = el('button', 'repeat-add', '+ Add Explosion');
@@ -1091,17 +1097,11 @@ const _TOOLS_CMDS = [
     // ── Output ────────────────────────────────────────────────────────────
     // Read all inputs live and assemble command string.
     function assembleGive() {
-      // Extract field values from DOM
-      const targetIn = panel.querySelector('.field-section:nth-child(2) .field-row:nth-child(1) input');
-      // Walk by label instead — find fields by position in the core section's rows
-      const coreRows = coreSection.querySelectorAll('.field-row');
-      const target  = coreRows[0] ? (coreRows[0].querySelector('input') || {value:''}).value.trim() : '';
-      const itemWrap= coreRows[1] ? coreRows[1].querySelector('input') : null;
-      const item    = itemWrap ? itemWrap.value.trim() : '';
-      const countIn = coreRows[2] ? coreRows[2].querySelector('input') : null;
-      const count   = countIn ? (parseInt(countIn.value) || 1) : 1;
-      const dataIn  = coreRows[3] ? coreRows[3].querySelector('input') : null;
-      const data    = dataIn ? (parseInt(dataIn.value) || 0) : 0;
+      // Read core field values from hoisted closure refs
+      const target  = coreRefs.targetIn.value.trim();
+      const item    = coreRefs.itemIn.value.trim();
+      const count   = parseInt(coreRefs.countIn.value) || 1;
+      const data    = parseInt(coreRefs.dataIn.value)  || 0;
 
       if (!target || !item) return '';
 
@@ -1139,26 +1139,15 @@ const _TOOLS_CMDS = [
         const comps = [];
 
         if (customName) {
-  const trimmed = customName.trim();
-
-  if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
-    comps.push(`custom_name='${trimmed}'`);
-  } else {
-    comps.push(`custom_name='{"text":"${trimmed.replace(/"/g,'\\"')}"}'`);
-  }
+          const escaped = customName.replace(/\\/g,'\\\\').replace(/"/g,'\\"').replace(/'/g,"\\'");
+          comps.push(`custom_name='{"text":"${escaped}"}'`);
         }
         if (loreLines.length) {
-  const loreStr = loreLines.map(l => {
-    const t = l.trim();
-
-    if (t.startsWith('{') || t.startsWith('[')) {
-      return `'${t}'`;
-    }
-
-    return `'{"text":"${t.replace(/"/g,'\\"')}"}'`;
-  }).join(',');
-
-  comps.push(`lore=[${loreStr}]`);
+          const loreStr = loreLines.map(l => {
+            const le = l.replace(/\\/g,'\\\\').replace(/"/g,'\\"').replace(/'/g,"\\'");
+            return `'{"text":"${le}"}'`;
+          }).join(',');
+          comps.push(`lore=[${loreStr}]`);
         }
         if (cmdModel) comps.push(`custom_model_data=${cmdModel}`);
         if (rarity)   comps.push(`rarity="${rarity}"`);
@@ -1172,38 +1161,25 @@ const _TOOLS_CMDS = [
         const normalEnchs = enchRows.filter(r => r.enchSel.value && !r.stored.checked);
         const storedEnchs = enchRows.filter(r => r.enchSel.value && r.stored.checked);
         if (normalEnchs.length) {
-          const eStr = normalEnchs.map(r => `{id:"${r.enchSel.value}",lvl:${parseInt(r.lvlIn.value)||1}}`).join(',');
-          comps.push(`enchantments=[${eStr}]`);
+          const entries = normalEnchs.map(r => `"${r.enchSel.value}":${parseInt(r.lvlIn.value)||1}`).join(',');
+          comps.push(`enchantments={levels:{${entries}}}`);
         }
         if (storedEnchs.length) {
-          const eStr = storedEnchs.map(r => `{id:"${r.enchSel.value}",lvl:${parseInt(r.lvlIn.value)||1}}`).join(',');
-          comps.push(`stored_enchantments=[${eStr}]`);
+          const entries = storedEnchs.map(r => `"${r.enchSel.value}":${parseInt(r.lvlIn.value)||1}`).join(',');
+          comps.push(`stored_enchantments={levels:{${entries}}}`);
         }
 
         // Attribute modifiers
-        // Attribute modifiers
-if (attrRows.length) {
-  const validAttrs = attrRows.filter(r => r.attrSel.value);
-
-  const aStr = validAttrs.map((r, i) => {
-    const parts = [];
-
-    parts.push(`type:"${r.attrSel.value}"`);
-    parts.push(`amount:${parseFloat(r.amountIn.value) || 0}`);
-    parts.push(`operation:"${r.opSel.value}"`);
-
-    if (r.slotSel.value && r.slotSel.value !== 'any') {
-      parts.push(`slot:"${r.slotSel.value}"`);
-    }
-
-    // Required for modern Java item components
-    parts.push(`id:"modifier_${i}_${Date.now()}"`);
-
-    return `{${parts.join(',')}}`;
-  }).join(',');
-
-  if (aStr) comps.push(`attribute_modifiers=[${aStr}]`);
-}
+        if (attrRows.length) {
+          const validAttrs = attrRows.filter(r => r.attrSel.value);
+          if (validAttrs.length) {
+            const aStr = validAttrs.map((r, i) => {
+              const shortName = r.attrSel.value.replace('minecraft:','').replace('.','_');
+              return `{id:"custom:${shortName}_${i}",type:"${r.attrSel.value}",amount:${parseFloat(r.amountIn.value)||0},operation:"${r.opSel.value}",slot:"${r.slotSel.value}"}`;
+            }).join(',');
+            comps.push(`attribute_modifiers=[${aStr}]`);
+          }
+        }
 
         // Fireworks
         if (fwRows.length) {
@@ -1242,45 +1218,25 @@ if (attrRows.length) {
         // Enchantments
         const normalEnchs = enchRows.filter(r => r.enchSel.value && !r.stored.checked);
         const storedEnchs = enchRows.filter(r => r.enchSel.value && r.stored.checked);
-        if (normalEnchs.length) {
-          const enchObj = _TOOLS_ENCHANTS.find(e => e.id === normalEnchs[0].enchSel.value);
-          nbt.ench = `[${normalEnchs.map(r => {
+        const normalEnchsBedrock = normalEnchs.filter(r => {
+          const eo = _TOOLS_ENCHANTS.find(e => e.id === r.enchSel.value);
+          return eo && !eo.javaOnly;
+        });
+        const storedEnchsBedrock = storedEnchs.filter(r => {
+          const eo = _TOOLS_ENCHANTS.find(e => e.id === r.enchSel.value);
+          return eo && !eo.javaOnly;
+        });
+        if (normalEnchsBedrock.length) {
+          nbt.ench = `[${normalEnchsBedrock.map(r => {
             const eo = _TOOLS_ENCHANTS.find(e => e.id === r.enchSel.value);
             return `{id:${eo ? eo.bedrockId : 0}s,lvl:${parseInt(r.lvlIn.value)||1}s}`;
           }).join(',')}]`;
         }
-        if (storedEnchs.length) {
-          nbt.StoredEnchantments = `[${storedEnchs.map(r => {
+        if (storedEnchsBedrock.length) {
+          nbt.StoredEnchantments = `[${storedEnchsBedrock.map(r => {
             const eo = _TOOLS_ENCHANTS.find(e => e.id === r.enchSel.value);
             return `{id:${eo ? eo.bedrockId : 0}s,lvl:${parseInt(r.lvlIn.value)||1}s}`;
           }).join(',')}]`;
-        }
-
-        // Attribute modifiers
-        if (attrRows.length) {
-          const validAttrs = attrRows.filter(r => r.attrSel.value);
-          if (validAttrs.length) {
-            const opMap = { add_value: 0, add_multiplied_base: 1, add_multiplied_total: 2 };
-            const slotMap = { any:0, mainhand:0, offhand:1, head:2, chest:3, legs:4, feet:5, body:6 };
-            nbt.AttributeModifiers = `[${validAttrs.map((r,i) => {
-  const amount = parseFloat(r.amountIn.value) || 0;
-  const op = opMap[r.opSel.value] || 0;
-
-  const parts = [
-    `AttributeName:"${r.attrSel.value}"`,
-    `Name:"${r.attrSel.value}"`,
-    `Amount:${amount}d`,
-    `Operation:${op}`,
-    `UUID:[I;${i+1},${i+2},${i+3},${i+4}]`
-  ];
-
-  if (r.slotSel.value && r.slotSel.value !== 'any') {
-    parts.push(`Slot:"${r.slotSel.value}"`);
-  }
-
-  return `{${parts.join(',')}}`;
-}).join(',')}]`;
-          }
         }
 
         // Fireworks
@@ -1326,12 +1282,16 @@ if (attrRows.length) {
       }
     }
 
-    const { section: outSection, resetBtn } = makeOutputBlock(assembleGive);
+    const { section: outSection, block: outBlock, resetBtn } = makeOutputBlock(assembleGive);
+
+    function doRefresh() {
+      const out = assembleGive();
+      if (out) { outBlock.textContent = out; outBlock.classList.remove('empty'); }
+      else      { outBlock.textContent = '— fill in the fields above —'; outBlock.classList.add('empty'); }
+    }
 
     resetBtn.onclick = () => {
-      panel.querySelectorAll('input[type="text"], input[type="number"]').forEach(i => {
-        i.value = i.placeholder || '';
-      });
+      panel.querySelectorAll('input[type="text"],input[type="number"]').forEach(i => i.value = i.placeholder || '');
       panel.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
       panel.querySelectorAll('textarea').forEach(t => t.value = '');
       panel.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
@@ -1341,23 +1301,9 @@ if (attrRows.length) {
       enchSection.querySelectorAll('.repeat-row').forEach(r => r.remove());
       attrSection.querySelectorAll('.repeat-row').forEach(r => r.remove());
       fwSection.querySelectorAll('.repeat-row').forEach(r => r.remove());
+      doRefresh();
     };
 
-    // Wire all change events to refresh output
-    panel.addEventListener('input',  outSection.children[1].__refresh || (() => {}));
-    panel.addEventListener('change', outSection.children[1].__refresh || (() => {}));
-    // Attach refresh to output block directly
-    const { refresh } = makeOutputBlock(assembleGive);
-    // Replace the dummy output section with a live one
-    outSection.children[1].addEventListener('DOMNodeInserted', () => {});
-
-    // Re-build with proper refresh wiring
-    const outBlock = outSection.querySelector('.tool-output-block');
-    function doRefresh() {
-      const out = assembleGive();
-      if (out) { outBlock.textContent = out; outBlock.classList.remove('empty'); }
-      else      { outBlock.textContent = '— fill in the fields above —'; outBlock.classList.add('empty'); }
-    }
     panel.addEventListener('input',  doRefresh);
     panel.addEventListener('change', doRefresh);
 
@@ -1414,8 +1360,10 @@ if (attrRows.length) {
 
     // ── Identity / Display ────────────────────────────────────────────────
     const identSection = fieldSection('Identity / Display', bd => {
-      const cnIn  = inp('text', 'tool-input', _platform === 'java' ? '{"text":"Name"}' : 'Name');
+      const cnIn  = inp('text', 'tool-input', 'My Entity Name');
       bd.appendChild(fieldRow('CustomName', cnIn, false));
+      const cnNote = el('div','tool-note','Plain text is auto-wrapped as a text component. For advanced formatting enter raw JSON: {"text":"Name","bold":true}');
+      bd.appendChild(cnNote);
       const cnvChk = el('input'); cnvChk.type='checkbox'; cnvChk.className='tool-checkbox';
       bd.appendChild(checkRow('CustomNameVisible', cnvChk));
 
@@ -1565,7 +1513,17 @@ if (attrRows.length) {
 
       // Identity
       const cnIn = identSection.querySelector('input[type="text"]');
-      if (cnIn && cnIn.value.trim()) nbt.CustomName = `'${JSON.stringify({"text":cnIn.value.trim()})}'`;
+      if (cnIn && cnIn.value.trim()) {
+        const cnVal = cnIn.value.trim();
+        let cnFormatted;
+        try {
+          JSON.parse(cnVal);
+          cnFormatted = `'${cnVal}'`;
+        } catch {
+          cnFormatted = `'{"text":"${cnVal.replace(/\\/g,'\\\\').replace(/"/g,'\\"').replace(/'/g,"\\'")}"}'`;
+        }
+        nbt.CustomName = cnFormatted;
+      }
       const cnvCB = identSection.querySelector('.tool-checkbox');
       if (cnvCB && cnvCB.checked) nbt.CustomNameVisible = '1b';
 
@@ -1592,7 +1550,7 @@ if (attrRows.length) {
 
       if (hVal > 0 && hVal !== 20)  nbt.Health = `${hVal}f`;
       if (mhVal > 0 && mhVal !== 20) {
-        nbt.Attributes = `[{Name:"minecraft:generic.max_health",Base:${mhVal}d}]`;
+        nbt.Attributes = `[{id:"minecraft:max_health",Base:${mhVal}d}]`;
       }
       if (invulnCB && invulnCB.checked)  nbt.Invulnerable = '1b';
       if (persistCB && persistCB.checked) nbt.PersistenceRequired = '1b';
@@ -1610,7 +1568,7 @@ if (attrRows.length) {
       // Effects
       if (effectRows.length) {
         const effStr = effectRows.filter(r => r.effSel.value).map(r => {
-          return `{id:"${r.effSel.value}",duration:${parseInt(r.durIn.value)||200},amplifier:${parseInt(r.ampIn.value)||0},ambient:${r.ambChk.checked?'1b':'0b'},show_particles:${r.partChk.checked?'1b':'0b'}}`;
+          return `{id:"${r.effSel.value}",duration:${parseInt(r.durIn.value)||200},amplifier:${parseInt(r.ampIn.value)||0},ambient:${r.ambChk.checked},show_particles:${r.partChk.checked}}`;
         }).join(',');
         if (effStr) nbt.active_effects = `[${effStr}]`;
       }
@@ -1953,259 +1911,4 @@ if (attrRows.length) {
             const xIn = inp('text','tool-input short','~'); const yIn = inp('text','tool-input short','~'); const zIn = inp('text','tool-input short','~');
             fieldsContainer.appendChild(el('span','field-label','x')); fieldsContainer.appendChild(xIn);
             fieldsContainer.appendChild(el('span','field-label','y')); fieldsContainer.appendChild(yIn);
-            fieldsContainer.appendChild(el('span','field-label','z')); fieldsContainer.appendChild(zIn);
-            obj.xIn=xIn; obj.yIn=yIn; obj.zIn=zIn;
-          } else if (['facing_entity'].includes(action)) {
-            const tIn = inp('text','tool-input short','@p');
-            const feetEyesSel = sel('tool-input medium',[['feet','feet'],['eyes','eyes']],'feet');
-            fieldsContainer.appendChild(el('span','field-label','entity')); fieldsContainer.appendChild(tIn);
-            fieldsContainer.appendChild(el('span','field-label','anchor')); fieldsContainer.appendChild(feetEyesSel);
-            obj.tIn=tIn; obj.feetEyesSel=feetEyesSel;
-          } else if (['in'].includes(action)) {
-            const dimIn = inp('text','tool-input medium','minecraft:overworld');
-            fieldsContainer.appendChild(el('span','field-label','dimension')); fieldsContainer.appendChild(dimIn);
-            obj.dimIn=dimIn;
-          } else if (['anchored'].includes(action)) {
-            const anchorSel = sel('tool-input medium',[['eyes','eyes'],['feet','feet']],'eyes');
-            fieldsContainer.appendChild(el('span','field-label','anchor')); fieldsContainer.appendChild(anchorSel);
-            obj.anchorSel=anchorSel;
-          } else if (['rotated'].includes(action)) {
-            const yawIn = inp('text','tool-input short','0'); const pitchIn = inp('text','tool-input short','0');
-            fieldsContainer.appendChild(el('span','field-label','yaw')); fieldsContainer.appendChild(yawIn);
-            fieldsContainer.appendChild(el('span','field-label','pitch')); fieldsContainer.appendChild(pitchIn);
-            obj.yawIn=yawIn; obj.pitchIn=pitchIn;
-          } else if (['store_result','store_success'].includes(action)) {
-            const storeTypeSel = sel('tool-input medium',[['score','score'],['entity','entity'],['block','block'],['bossbar','bossbar'],['storage','storage']],'score');
-            fieldsContainer.appendChild(el('span','field-label','store in')); fieldsContainer.appendChild(storeTypeSel);
-            // For score: target + objective
-            const scoreTarget = inp('text','tool-input short','@s');
-            const scoreObj    = inp('text','tool-input short','myobj');
-            fieldsContainer.appendChild(el('span','field-label','target')); fieldsContainer.appendChild(scoreTarget);
-            fieldsContainer.appendChild(el('span','field-label','obj'));    fieldsContainer.appendChild(scoreObj);
-            obj.storeTypeSel=storeTypeSel; obj.scoreTarget=scoreTarget; obj.scoreObj=scoreObj;
-          }
-          if (onChange) { fieldsContainer.addEventListener('input', onChange); fieldsContainer.addEventListener('change', onChange); }
-        }
-
-        rebuildFields();
-        if (!isRun) actionSel.addEventListener('change', () => { rebuildFields(); if (onChange) onChange(); });
-
-        const rmBtn = isRun ? null : el('button','repeat-remove','✕');
-        stepEl.appendChild(actionSel);
-        stepEl.appendChild(fieldsContainer);
-        if (rmBtn) {
-          rmBtn.onclick = () => {
-            stepsContainer.removeChild(stepEl);
-            executeSteps.splice(executeSteps.indexOf(obj), 1);
-            if (onChange) onChange();
-          };
-          stepEl.appendChild(rmBtn);
-        }
-
-        return stepEl;
-      }
-
-      // Initial: one "as" step + "run" step
-      const asStep  = addStep(false);
-      const runStep = addStep(true);
-      stepsContainer.appendChild(asStep);
-      stepsContainer.appendChild(runStep);
-
-      const addStepBtn = el('button','repeat-add','+ Add Step');
-      addStepBtn.onclick = () => {
-        const newStep = addStep(false);
-        // Insert before run step
-        stepsContainer.insertBefore(newStep, runStep);
-        if (onChange) onChange();
-      };
-      container.appendChild(addStepBtn);
-      container.appendChild(stepsContainer);
-    }
-
-    function assembleExecute() {
-      const tokens = [];
-      for (const obj of executeSteps) {
-        const action = obj.isRun ? 'run' : obj.actionSel.value;
-        if (action === 'run') {
-          tokens.push('run');
-          tokens.push((obj.runIn ? obj.runIn.value.trim() : '') || 'say hello');
-          break; // run is always last
-        } else if (['as','at'].includes(action)) {
-          tokens.push(action); tokens.push(obj.tIn ? obj.tIn.value.trim() || '@a' : '@a');
-        } else if (['if_entity','unless_entity'].includes(action)) {
-          const sub = action.startsWith('if') ? 'if' : 'unless';
-          tokens.push(sub); tokens.push('entity'); tokens.push(obj.tIn ? obj.tIn.value.trim() || '@p' : '@p');
-        } else if (['if_block','unless_block'].includes(action)) {
-          const sub = action.startsWith('if') ? 'if' : 'unless';
-          tokens.push(sub); tokens.push('block');
-          tokens.push(obj.xIn ? obj.xIn.value.trim()||'~' : '~');
-          tokens.push(obj.yIn ? obj.yIn.value.trim()||'~' : '~');
-          tokens.push(obj.zIn ? obj.zIn.value.trim()||'~' : '~');
-          tokens.push(obj.blkIn ? obj.blkIn.value.trim()||'minecraft:stone' : 'minecraft:stone');
-        } else if (['if_blocks','unless_blocks'].includes(action)) {
-          const sub = action.startsWith('if') ? 'if' : 'unless';
-          tokens.push(sub); tokens.push('blocks');
-          if (obj.blockInputs) {
-            ['bx','by','bz','ex','ey','ez','dx','dy','dz'].forEach(k => tokens.push((obj.blockInputs[k]||{value:'~'}).value.trim()||'~'));
-          }
-          tokens.push(obj.modeSel ? obj.modeSel.value : 'all');
-        } else if (action === 'positioned') {
-          tokens.push('positioned');
-          tokens.push(obj.xIn ? obj.xIn.value.trim()||'~' : '~');
-          tokens.push(obj.yIn ? obj.yIn.value.trim()||'~' : '~');
-          tokens.push(obj.zIn ? obj.zIn.value.trim()||'~' : '~');
-        } else if (action === 'facing') {
-          tokens.push('facing');
-          tokens.push(obj.xIn ? obj.xIn.value.trim()||'~' : '~');
-          tokens.push(obj.yIn ? obj.yIn.value.trim()||'~' : '~');
-          tokens.push(obj.zIn ? obj.zIn.value.trim()||'~' : '~');
-        } else if (action === 'facing_entity') {
-          tokens.push('facing entity');
-          tokens.push(obj.tIn ? obj.tIn.value.trim()||'@p' : '@p');
-          tokens.push(obj.feetEyesSel ? obj.feetEyesSel.value : 'feet');
-        } else if (action === 'in') {
-          tokens.push('in');
-          tokens.push(obj.dimIn ? obj.dimIn.value.trim()||'minecraft:overworld' : 'minecraft:overworld');
-        } else if (action === 'anchored') {
-          tokens.push('anchored');
-          tokens.push(obj.anchorSel ? obj.anchorSel.value : 'eyes');
-        } else if (action === 'rotated') {
-          tokens.push('rotated');
-          tokens.push(obj.yawIn ? obj.yawIn.value.trim()||'0' : '0');
-          tokens.push(obj.pitchIn ? obj.pitchIn.value.trim()||'0' : '0');
-        } else if (['store_result','store_success'].includes(action)) {
-          const sub = action === 'store_result' ? 'result' : 'success';
-          tokens.push('store'); tokens.push(sub); tokens.push('score');
-          tokens.push(obj.scoreTarget ? obj.scoreTarget.value.trim()||'@s' : '@s');
-          tokens.push(obj.scoreObj    ? obj.scoreObj.value.trim()||'myobj' : 'myobj');
-        }
-      }
-      return tokens.length ? `/execute ${tokens.join(' ')}` : '';
-    }
-
-    // ── Command output assembly (non-execute) ─────────────────────────────
-    function assembleCmd() {
-      if (!selectedCmd) return '';
-      if (selectedCmd.special === 'execute') return assembleExecute();
-
-      const paramsToShow = selectedCmd.params.filter(p => {
-        if (_platform === 'java'    && p.bedrockOnly) return false;
-        if (_platform === 'bedrock' && p.javaOnly)    return false;
-        return true;
-      });
-
-      const prefix = selectedCmd.id.includes('_')
-        ? '/' + selectedCmd.id.replace(/_([a-z])/g, ' $1') + ' '
-        : '/' + selectedCmd.id + ' ';
-
-      const parts = paramsToShow.map(p => {
-        const inputEl = fieldInputs[p.key];
-        if (!inputEl) return null;
-        let val;
-        if (p.type === 'bool') {
-          val = inputEl.checked ? 'true' : null;
-          if (!p.required && !inputEl.checked) return null;
-          val = inputEl.checked ? 'true' : 'false';
-        } else if (p.type === 'enum' || p.type === 'effect' || p.type === 'enchantment' || p.type === 'gamerule') {
-          val = inputEl.value;
-          if (!val) return p.required ? null : null;
-        } else {
-          val = typeof inputEl.value === 'string' ? inputEl.value.trim() : '';
-          if (!val) return p.required ? null : null;
-        }
-        return val;
-      });
-
-      // If any required param is missing, still output best effort
-      const tokens = parts.filter(p => p != null);
-      return prefix.trimEnd() + (tokens.length ? ' ' + tokens.join(' ') : '');
-    }
-
-    // ── Output block ──────────────────────────────────────────────────────
-    const outSection = el('div','tool-output-section');
-    const outHeader  = el('div','tool-output-header');
-    const outLabel   = el('span','','Output');
-    const outActions = el('div','tool-output-actions');
-    const copyBtn    = el('button','tool-btn','Copy');
-    const resetBtn2  = el('button','tool-btn','Reset');
-    outActions.appendChild(copyBtn); outActions.appendChild(resetBtn2);
-    outHeader.appendChild(outLabel); outHeader.appendChild(outActions);
-    const outBlock = el('div','tool-output-block empty','— select a command and fill in the fields —');
-    outSection.appendChild(outHeader); outSection.appendChild(outBlock);
-
-    copyBtn.onclick = () => {
-      if (outBlock.classList.contains('empty')) return;
-      navigator.clipboard.writeText(outBlock.textContent).then(() => {
-        copyBtn.classList.add('copy-success'); copyBtn.textContent = 'Copied';
-        setTimeout(() => { copyBtn.classList.remove('copy-success'); copyBtn.textContent = 'Copy'; }, 1500);
-      });
-    };
-    resetBtn2.onclick = () => {
-      formArea.querySelectorAll('input[type="text"],input[type="number"]').forEach(i => i.value = i.placeholder||'');
-      formArea.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
-      formArea.querySelectorAll('textarea').forEach(t => t.value = '');
-      formArea.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
-      doRefresh();
-    };
-
-    body.appendChild(outSection);
-
-    function doRefresh() {
-      const out = assembleCmd();
-      if (out) { outBlock.textContent = out; outBlock.classList.remove('empty'); }
-      else     { outBlock.textContent = '— select a command and fill in the fields —'; outBlock.classList.add('empty'); }
-    }
-
-    searchIn.addEventListener('input', () => { rebuildPicker(); doRefresh(); });
-    formArea.addEventListener('input',  doRefresh);
-    formArea.addEventListener('change', doRefresh);
-
-    // Initial render
-    rebuildPicker();
-
-    panel.appendChild(body);
-
-    main.querySelectorAll('.group').forEach(e => e.remove());
-    const noRes = document.getElementById('no-results');
-    if (noRes) noRes.style.display = 'none';
-    main.appendChild(panel);
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // RENDER DISPATCHER
-  // ─────────────────────────────────────────────────────────────────────────
-  function renderTool(main) {
-    main.querySelectorAll('.group').forEach(e => e.remove());
-    // Remove any existing tool panel
-    const existing = main.querySelector('.tool-panel');
-    if (existing) existing.remove();
-    const noRes = document.getElementById('no-results');
-    if (noRes) noRes.style.display = 'none';
-
-    if      (_activeTool === 'give')   renderGiveTool(main);
-    else if (_activeTool === 'summon') renderSummonTool(main);
-    else if (_activeTool === 'cmd')    renderCmdTool(main);
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // REGISTER
-  // ─────────────────────────────────────────────────────────────────────────
-  SECTIONS.register({
-    id:            'tools',
-    label:         'Toolbox',
-    badge:         'Minecraft · Toolbox & Utilities',
-    commandPrefix: '',
-    accent: {
-      '--blue':      '#cc66ff',
-      '--blue-dim':  '#5c1a8a',
-      '--blue-glow': 'rgba(204,102,255,0.13)'
-    },
-    filters:    [],
-    groupOrder: [],
-    groupMeta:  {},
-    commands:   [],
-    renderTool:    renderTool,
-    renderSidebar: renderSidebar
-  });
-
-})();
+            fieldsContainer.appendChild(el('span','field-label','z')); fieldsContainer.appendChild
